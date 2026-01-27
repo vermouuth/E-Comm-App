@@ -15,9 +15,10 @@
 /build/
 
 # IDE files
-/.idea/
-/*.iml
-/.vscode/
+.idea/
+*.iml
+.vscode/
+.mvn/
 
 # OS files
 .DS_Store
