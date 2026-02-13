@@ -92,7 +92,7 @@ public class CategoryServiceImpl implements CategoryService {
                     categoryPage.getSize(),
                     categoryPage.getTotalPages(),
                     categoryPage.getTotalElements(),
-                    categoryPage.getNumberOfElements() ==  categoryList.size());
+                    categoryPage.getNumber() ==  categoryList.size());
 
         }
 
