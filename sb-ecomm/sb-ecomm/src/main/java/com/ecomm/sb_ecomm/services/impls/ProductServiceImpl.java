@@ -35,6 +35,10 @@ public class ProductServiceImpl implements ProductService {
 
     private final FileService fileService;
 
+    private Double recalculateSpecialPrice(double price , double specialOffer) {
+        return price - (price * (specialOffer / 100)) ;
+    }
+
     @Value("${project.images}")
     private String path;
 
@@ -107,7 +111,7 @@ public class ProductServiceImpl implements ProductService {
         productFromDatabase.setQuantity(productDto.getQuantity());
         productFromDatabase.setPrice(productDto.getPrice());
         productFromDatabase.setDiscount(productDto.getDiscount());
-        productFromDatabase.setSpecialPrice(productFromDatabase.recalculateSpecialPrice());
+        productFromDatabase.setSpecialPrice(this.recalculateSpecialPrice(productFromDatabase.getPrice(),productFromDatabase.getDiscount()));
 
         productFromDatabase =  this.productRepository.save(productFromDatabase);
         return this.modelMapper.map(productFromDatabase, ProductDto.class);
@@ -122,8 +126,8 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(()-> new ApiException("Category with id " + categoryId + " does not exist"));
 
         Sort sortByAnyOrder = sortOrder.equalsIgnoreCase("asc")
-                ? Sort.by(Sort.Direction.ASC,sortOrder)
-                : Sort.by(Sort.Direction.DESC,sortOrder);
+                ? Sort.by(Sort.Direction.ASC,sortBy)
+                : Sort.by(Sort.Direction.DESC,sortBy);
 
         Pageable pageDetails = PageRequest.of(pageNumber - 1, pageSize, sortByAnyOrder);
         Page<Product> productPage = this.productRepository.findByCategory(categoryFromDatabase,pageDetails);

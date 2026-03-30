@@ -5,9 +5,13 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "products")
@@ -18,6 +22,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "product_id")
     private Long productId;
 
     @NotBlank
@@ -30,14 +35,13 @@ public class Product {
 
     private String image;
 
-
     @NotNull
-    @Min(1)
-    @Max(100)
+    @DecimalMin(value = "0.0", inclusive = true , message = "Discount must not be negative.")
+    @DecimalMax(value = "100.0" , inclusive = true  , message = "Discount must not be more than 100%")
     private Double discount;
 
     @NotNull
-    @Min(1)
+    @DecimalMin(value = "0.0" , inclusive = false , message = "Price must not be negative")
     private Double price;
 
 
@@ -48,20 +52,15 @@ public class Product {
     @Column(nullable = false)
     private Integer quantity;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    // Keep specialPrice consistent automatically
-    @PrePersist
-    @PreUpdate
-    private void syncSpecialPrice() {
-        this.specialPrice = recalculateSpecialPrice();
-    }
+    @ManyToOne()
+    @JoinColumn(name = "user_id" )
+    private User user;
 
-    public Double recalculateSpecialPrice() {
-        Double totalPrice = getPrice() - (getPrice() * (getDiscount() / 100));
 
-        return totalPrice * getQuantity();
-    }
+
+
 }

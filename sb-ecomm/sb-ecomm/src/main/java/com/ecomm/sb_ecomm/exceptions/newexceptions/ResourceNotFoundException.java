@@ -1,28 +1,28 @@
 package com.ecomm.sb_ecomm.exceptions.newexceptions;
 
-public class ResourceNotFoundException extends RuntimeException {
+public class    ResourceNotFoundException extends RuntimeException {
 
     String resourceName;
-    String filed;
+    String field;
     String fieldName;
-    Long filedId;
+    Long fieldId;
 
 
-    public ResourceNotFoundException(String resourceName , String filed ,String filedName)
+    public ResourceNotFoundException(String resourceName , String field, String filedName)
     {
-        super(String.format("%s not found with %s: %s" , resourceName, filed , filedName));
+        super(String.format("%s not found with %s: %s" , resourceName, field, filedName));
         this.resourceName = resourceName;
-        this.filed = filed;
-        this.fieldName = fieldName;
+        this.field = field;
+        this.fieldName = filedName;
     }
 
 
-    public ResourceNotFoundException(String resourceName , String filed ,Long filedId)
+    public ResourceNotFoundException(String resourceName , String field, Long fieldId)
     {
-        super(String.format("%s not found with %s: %s" , resourceName, filed , filedId));
+        super(String.format("%s not found with %s: %s" , resourceName, field, fieldId));
         this.resourceName = resourceName;
-        this.filed = filed;
-        this.filedId = filedId;
+        this.field = field;
+        this.fieldId = fieldId;
 
     }
 
