@@ -64,6 +64,9 @@ public class User {
     inverseJoinColumns = @JoinColumn(name = "address_id"))
     private Set<Address> addresses = new HashSet<>();
 
+    @ToString.Exclude
+    @OneToOne(mappedBy = "user" , cascade = {CascadeType.PERSIST ,CascadeType.MERGE,CascadeType.REMOVE} , fetch = FetchType.EAGER , orphanRemoval = true)
+    private Cart cart;
 
 
 

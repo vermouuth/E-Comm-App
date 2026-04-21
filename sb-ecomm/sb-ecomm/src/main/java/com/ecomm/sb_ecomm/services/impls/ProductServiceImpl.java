@@ -64,6 +64,7 @@ public class ProductServiceImpl implements ProductService {
         Product productEntity = this.modelMapper.map(productDto, Product.class);
         productEntity.setCategory(categoryFromDb);
         productEntity.setImage("default.png");
+        productEntity.setSpecialPrice(recalculateSpecialPrice(productEntity.getPrice(), productEntity.getDiscount()));
 
 
         productEntity = this.productRepository.save(productEntity);
