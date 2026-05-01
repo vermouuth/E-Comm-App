@@ -2,12 +2,15 @@ package com.ecomm.sb_ecomm.services.impls;
 
 import com.ecomm.sb_ecomm.exceptions.newexceptions.ApiException;
 import com.ecomm.sb_ecomm.exceptions.newexceptions.ResourceNotFoundException;
+import com.ecomm.sb_ecomm.models.Cart;
 import com.ecomm.sb_ecomm.models.Category;
 import com.ecomm.sb_ecomm.models.Product;
 import com.ecomm.sb_ecomm.payload.dto.ProductDto;
 import com.ecomm.sb_ecomm.payload.responses.ProductResponse;
+import com.ecomm.sb_ecomm.repositories.CartRepository;
 import com.ecomm.sb_ecomm.repositories.CategoryRepository;
 import com.ecomm.sb_ecomm.repositories.ProductRepository;
+import com.ecomm.sb_ecomm.services.CartServices;
 import com.ecomm.sb_ecomm.services.FileService;
 import com.ecomm.sb_ecomm.services.ProductService;
 import org.modelmapper.ModelMapper;
@@ -29,11 +32,15 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
 
+    private final CartRepository cartRepository;
+
     private final ModelMapper modelMapper;
 
     private final CategoryRepository categoryRepository;
 
     private final FileService fileService;
+
+    private  final CartServices cartServices;
 
     private Double recalculateSpecialPrice(double price , double specialOffer) {
         return price - (price * (specialOffer / 100)) ;
@@ -42,11 +49,14 @@ public class ProductServiceImpl implements ProductService {
     @Value("${project.images}")
     private String path;
 
-    public ProductServiceImpl(ProductRepository productRepository ,CategoryRepository categoryRepository , ModelMapper modelMapper , FileService fileService) {
+    public ProductServiceImpl(ProductRepository productRepository ,CategoryRepository categoryRepository , CartServices cartServices ,
+                              ModelMapper modelMapper , FileService fileService , CartRepository cartRepository ) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.modelMapper = modelMapper;
         this.fileService = fileService;
+        this.cartRepository = cartRepository;
+        this.cartServices = cartServices;
     }
 
     @Override
@@ -98,7 +108,12 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDto deleteProduct(Long productId) {
         Product product = this.productRepository.findById(productId).orElseThrow(()-> new ApiException("Product with id " + productId + " does not exist"));
+
+        List<Cart> carts = this.cartRepository.findCartsByProductId(productId);
+        carts.forEach(cart -> this.cartServices.deleteProductFromCart(cart.getCartId(), productId));
+
         this.productRepository.delete(product);
+
         return this.modelMapper.map(product, ProductDto.class);
     }
 
@@ -115,6 +130,12 @@ public class ProductServiceImpl implements ProductService {
         productFromDatabase.setSpecialPrice(this.recalculateSpecialPrice(productFromDatabase.getPrice(),productFromDatabase.getDiscount()));
 
         productFromDatabase =  this.productRepository.save(productFromDatabase);
+
+        List<Cart> carts = this.cartRepository.findCartsByProductId(productId);
+
+
+        carts.forEach((cart -> {this.cartServices.updateProductInCarts(cart.getCartId() , productId);}));
+
         return this.modelMapper.map(productFromDatabase, ProductDto.class);
 
     }

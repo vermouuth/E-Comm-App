@@ -25,7 +25,7 @@ public class Category {
     @Size(min = 5 , max = 100 , message = "Category must contain at least 5 letters")
     private String categoryName;
 
-    @OneToMany(mappedBy = "category",cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "category" ,cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Product> products;
 

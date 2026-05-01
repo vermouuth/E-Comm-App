@@ -5,6 +5,7 @@ import com.ecomm.sb_ecomm.exceptions.newexceptions.ApiException;
 import com.ecomm.sb_ecomm.exceptions.newexceptions.ResourceNotFoundException;
 import com.ecomm.sb_ecomm.models.*;
 import com.ecomm.sb_ecomm.payload.dto.CartDto;
+import com.ecomm.sb_ecomm.payload.dto.CartItemDto;
 import com.ecomm.sb_ecomm.payload.dto.ProductDto;
 import com.ecomm.sb_ecomm.repositories.CartItemRepository;
 import com.ecomm.sb_ecomm.repositories.CartRepository;
@@ -12,7 +13,6 @@ import com.ecomm.sb_ecomm.repositories.ProductRepository;
 import com.ecomm.sb_ecomm.services.CartServices;
 import org.springframework.transaction.annotation.Transactional;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -37,6 +37,10 @@ public class CartServicesImpl implements CartServices {
         this.cartItemRepository = cartItemRepository;
         this.modelMapper = modelMapper;
         this.authUtils = authUtils;
+    }
+
+    double calculateTotalPrice(Cart cart){
+        return cart.getCartItems().stream().mapToDouble( item -> item.getProductPrice() * item.getQuantity()).sum();
     }
 
     private Cart getOrCreateCart() {
@@ -83,7 +87,8 @@ public class CartServicesImpl implements CartServices {
       cartItemRepository.save(newCartItem);
 
       cart.getCartItems().add(newCartItem);
-      cart.setTotalPrice(cart.getTotalPrice() + (productFromDB.getSpecialPrice() * quantity));
+
+      cart.setTotalPrice(this.calculateTotalPrice(cart));
       cartRepository.save(cart);
 
       CartDto cartDto = modelMapper.map(cart, CartDto.class);
@@ -102,10 +107,8 @@ public class CartServicesImpl implements CartServices {
 
      return cartDto;
 
-
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     @Override
     public List<CartDto> getCarts() {
@@ -115,19 +118,21 @@ public class CartServicesImpl implements CartServices {
             throw new ApiException("there is no carts it has been added");
 
 
-        List<CartDto> cartDtoList = carts.stream().map(cart -> {
+        return carts.stream().map(cart -> {
             CartDto cartDto = modelMapper.map(cart, CartDto.class);
 
             List<ProductDto> productDtoList = cart.getCartItems().stream()
-                    .map(cartItem -> modelMapper.map(cartItem.getProduct(), ProductDto.class))
+                    .map(cartItem -> {
+                        ProductDto productDto = this.modelMapper.map(cartItem.getProduct(), ProductDto.class);
+                        productDto.setQuantity(cartItem.getQuantity());
+                        return productDto;
+                    })
                     .toList();
 
             cartDto.setProducts(productDtoList);
-
             return cartDto;
-        }).toList();
 
-        return cartDtoList;
+        }).toList();
     }
 
     @Override
@@ -142,14 +147,20 @@ public class CartServicesImpl implements CartServices {
         CartDto cartDto = this.modelMapper.map(userCart,CartDto.class);
 
         List<ProductDto> productsDtoList = userCart.getCartItems().stream()
-                        .map(cartItem -> modelMapper.map(cartItem.getProduct(),ProductDto.class))
+                        .map(cartItem ->{
+                            ProductDto productDto = modelMapper.map(cartItem.getProduct(), ProductDto.class);
+                            productDto.setQuantity(cartItem.getQuantity());
+                            return productDto;
+                        })
                                 .toList();
+
+        userCart.setTotalPrice(this.calculateTotalPrice(userCart));
+        userCart = this.cartRepository.save(userCart);
 
         cartDto.setProducts(productsDtoList);
         return cartDto;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     @Override
     public CartDto getCartByEmail(String userEmail) {
@@ -166,6 +177,62 @@ public class CartServicesImpl implements CartServices {
                 .map(item -> this.modelMapper.map(item.getProduct(),ProductDto.class)).toList();
 
         cartDto.setProducts(productDtoList);
+
+        return cartDto;
+
+    }
+
+    @Override
+    public void updateProductInCarts(Long cartId, Long productId) {
+
+        CartItem cartItem = this.cartItemRepository.findByCartIdAndProductId(cartId, productId);
+
+        if(cartItem == null)
+            throw new ApiException("CartItem is not fount !!!");
+
+        cartItem.setProductPrice(cartItem.getProduct().getSpecialPrice());
+        cartItemRepository.save(cartItem);
+
+        Cart cart = cartRepository.findById(cartId).orElseThrow( () -> new ApiException("Cart is not fount !!!"));
+
+        double total = cart.getCartItems().stream()
+                .mapToDouble(item -> item.getProductPrice() * item.getQuantity())
+                .sum();
+
+        cart.setTotalPrice(total);
+        cartRepository.save(cart);
+    }
+
+    @Transactional
+    @Override
+    public CartDto deleteProductFromCurrentCart(Long productId) {
+
+        Cart cart = cartRepository.findByUserEmail(authUtils.loggedInUser().getEmail());
+        if (cart == null)
+            throw new ApiException("Cart is not fount !!!");
+
+         CartItem cartItem =  cartItemRepository.findByCartIdAndProductId(cart.getCartId(), productId);
+         if(cartItem == null)
+                throw  new ApiException("Product is not fount !!!");
+
+        cart.getCartItems().remove(cartItem);
+
+        double totalPrice = cart.getCartItems().stream()
+                .mapToDouble(item -> item.getProductPrice() * item.getQuantity()).sum();
+
+        cart.setTotalPrice(totalPrice);
+        cartRepository.save(cart);
+
+        CartDto cartDto = this.modelMapper.map(cart,CartDto.class);
+
+        Stream<ProductDto>  productDtoStream = cart.getCartItems().stream()
+                .map(item ->{
+                   ProductDto productDto = this.modelMapper.map(item.getProduct(), ProductDto.class);
+                   productDto.setQuantity(item.getQuantity());
+                   return productDto;
+                } );
+
+        cartDto.setProducts(productDtoStream.toList());
 
         return cartDto;
 
@@ -214,7 +281,6 @@ public class CartServicesImpl implements CartServices {
     }
 
 
-    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     @Override
     public String deleteProductFromCart(Long cartId, Long productId) {
@@ -222,21 +288,27 @@ public class CartServicesImpl implements CartServices {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart", "cartId", cartId));
 
-        if (cartItemRepository.findByCartIdAndProductId(cartId, productId) == null)
+        CartItem cartItem =  cartItemRepository.findByCartIdAndProductId(cartId, productId);
+        if(cartItem == null)
             throw new ResourceNotFoundException("CartItem", "productId", productId);
 
-        cartItemRepository.deleteByCartIdAndProductId(cartId, productId);
+        this.cartItemRepository.deleteByCartIdAndProductId(cartId, productId);
+        cart = cartRepository.save(cart);
 
         double total = cart.getCartItems().stream()
-                .filter(item -> !item.getProduct().getProductId().equals(productId))
                 .mapToDouble(item -> item.getProductPrice() * item.getQuantity())
                 .sum();
 
+        System.out.println("\n\n\n\ntotal Price -> " + total + "\n\n\n\n");
+
         cart.setTotalPrice(total);
-        cartRepository.save(cart);
+        cart = cartRepository.save(cart);
+
 
         return "Product " + productId + " removed from cart " + cartId + " for user: " + cart.getUser().getEmail();
     }
+
+
 
 
 }

@@ -1,7 +1,6 @@
 package com.ecomm.sb_ecomm.services;
 
 import com.ecomm.sb_ecomm.payload.dto.CartDto;
-import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -17,4 +16,8 @@ public interface CartServices {
     String deleteProductFromCart(Long cartId, Long productId);
 
     CartDto getCartByEmail(String userEmail);
+
+    void updateProductInCarts(Long cartId, Long productId);
+
+    CartDto deleteProductFromCurrentCart(Long productId);
 }
