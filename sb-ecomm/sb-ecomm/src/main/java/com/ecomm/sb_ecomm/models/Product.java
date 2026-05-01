@@ -60,7 +60,7 @@ public class Product {
     @JoinColumn(name = "user_id" )
     private User user;
 
-    @OneToMany(mappedBy = "product" , cascade = {CascadeType.PERSIST , CascadeType.REMOVE , CascadeType.MERGE} , fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "product" , cascade = {CascadeType.PERSIST , CascadeType.MERGE} , fetch = FetchType.LAZY)
     private List<CartItem> cartItems = new ArrayList<>();
 
 }

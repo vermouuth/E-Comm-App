@@ -18,37 +18,46 @@ public class CartController {
         this.cartServices = cartServices;
     }
 
-    @PostMapping("/carts/{productId}/quantity/{quantity}")
+    @PostMapping("/user/carts/{productId}/quantity/{quantity}")
     public ResponseEntity<?> addProductToCart(@PathVariable("productId") Long productId, @PathVariable("quantity") int quantity){
         CartDto cartDto = this.cartServices.addProductToCart(productId,quantity);
         return new ResponseEntity<>(cartDto, HttpStatus.CREATED);
     }
 
-    @GetMapping("/carts")
+    @GetMapping("/admin/carts")
     public ResponseEntity<?> getCarts(){
         List<CartDto> cartDtoList = this.cartServices.getCarts();
         return ResponseEntity.ok().body(cartDtoList);
     }
 
-    @GetMapping("carts/users/cart")
+
+    @GetMapping("/user/carts/users/cart")
     public ResponseEntity<?> getUserCart(){
         CartDto userCart = this.cartServices.getUserCart();
         return ResponseEntity.ok().body(userCart);
     }
 
-    @GetMapping("/carts/users/cart/{userEmail}")
-    public ResponseEntity<?> getUserCart(@PathVariable("userEmail") String userEmail){
-        return new ResponseEntity<>(this.cartServices.getCartByEmail(userEmail),HttpStatus.FOUND);
+    @GetMapping("/admin/carts/users/cart/{userEmail}")
+    public ResponseEntity<?> getUserCartByEmail(@PathVariable("userEmail") String userEmail)
+    {
+        CartDto cartDto = this.cartServices.getCartByEmail(userEmail);
+        return ResponseEntity.ok(cartDto);
     }
 
-    @PutMapping("/cart/products/{productId}/quantity/{quantity}")
+        @PutMapping("/admin/cart/products/{productId}/quantity/{quantity}")
     public ResponseEntity<?> updateProductQuantity(@PathVariable("productId") Long productId, @PathVariable("quantity") int quantity){
         CartDto updatedCart = this.cartServices.updateProductQuantity(productId , quantity);
-        return new ResponseEntity<>(updatedCart, HttpStatus.CREATED);
+        return new ResponseEntity<>(updatedCart, HttpStatus.OK);
     }
 
-    @DeleteMapping("/carts/{cartId}/product/{productId}")
+    @DeleteMapping("/admin/carts/{cartId}/product/{productId}")
     public String deleteProductFromCart(@PathVariable("cartId") Long cartId, @PathVariable Long productId){
         return this.cartServices.deleteProductFromCart(cartId, productId);
+    }
+
+        @DeleteMapping("/user/cart/product/{productId}")
+    public ResponseEntity<?> deleteProductFromCurrentUser(@PathVariable("productId") Long productId){
+        CartDto cartDto = this.cartServices.deleteProductFromCurrentCart(productId);
+        return new ResponseEntity<>(cartDto, HttpStatus.OK);
     }
 }
