@@ -1,6 +1,6 @@
 package com.ecomm.sb_ecomm.security.services;
 
-import com.ecomm.sb_ecomm.models.User;
+import com.ecomm.sb_ecomm.models.Users;
 import com.ecomm.sb_ecomm.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +21,7 @@ public class UserDetailsServicesImpl  implements UserDetailsService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = this.userRepository.findByUsername(username)
+        Users user = this.userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
         return UserDetailsImpl.build(user);
     }

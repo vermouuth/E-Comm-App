@@ -1,7 +1,7 @@
 package com.ecomm.sb_ecomm.security.services;
 
 
-import com.ecomm.sb_ecomm.models.User;
+import com.ecomm.sb_ecomm.models.Users;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,13 +38,13 @@ public class UserDetailsImpl implements UserDetails{
         this.password = password;
     }
 
-    public static UserDetailsImpl build(User user) {
+    public static UserDetailsImpl build(Users user) {
         List<GrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getRoleName().name()))
                 .collect(Collectors.toList());
 
         return new UserDetailsImpl(
-                user.getUserId(),
+                user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getPassword(),

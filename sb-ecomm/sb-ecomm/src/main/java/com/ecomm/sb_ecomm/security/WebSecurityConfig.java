@@ -2,7 +2,7 @@ package com.ecomm.sb_ecomm.security;
 
 import com.ecomm.sb_ecomm.models.AppRole;
 import com.ecomm.sb_ecomm.models.Role;
-import com.ecomm.sb_ecomm.models.User;
+import com.ecomm.sb_ecomm.models.Users;
 import com.ecomm.sb_ecomm.repositories.RoleRepository;
 import com.ecomm.sb_ecomm.repositories.UserRepository;
 import com.ecomm.sb_ecomm.security.jwt.AuthEntryPoint;
@@ -123,17 +123,17 @@ public class WebSecurityConfig {
 
             // Create users if not already present
             if (!userRepository.existsByUsername("user1")) {
-                User user1 = new User("user1",passwordEncoder.encode("password1") ,"user1@example.com" );
+                Users user1 = new Users("user1",passwordEncoder.encode("password1") ,"user1@example.com" );
                 userRepository.save(user1);
             }
 
             if (!userRepository.existsByUsername("seller1")) {
-                User seller1 = new User("seller1", passwordEncoder.encode("password2"),"seller1@example.com" );
+                Users seller1 = new Users("seller1", passwordEncoder.encode("password2"),"seller1@example.com" );
                 userRepository.save(seller1);
             }
 
             if (!userRepository.existsByUsername("admin")) {
-                User admin = new User("admin",  passwordEncoder.encode("adminPass") ,"admin@example.com");
+                Users admin = new Users("admin",  passwordEncoder.encode("adminPass") ,"admin@example.com");
                 userRepository.save(admin);
             }
 

@@ -2,7 +2,7 @@ package com.ecomm.sb_ecomm.controllers;
 
 import com.ecomm.sb_ecomm.models.AppRole;
 import com.ecomm.sb_ecomm.models.Role;
-import com.ecomm.sb_ecomm.models.User;
+import com.ecomm.sb_ecomm.models.Users;
 import com.ecomm.sb_ecomm.repositories.RoleRepository;
 import com.ecomm.sb_ecomm.repositories.UserRepository;
 import com.ecomm.sb_ecomm.security.jwt.JwtUtils;
@@ -88,7 +88,7 @@ public class AuthController {
 
 
 
-        User user = new User(signedupUser.getUsername(),signedupUser.getEmail(),this.passwordEncoder.encode(signedupUser.getPassword()));
+        Users user = new Users(signedupUser.getUsername(),signedupUser.getEmail(),this.passwordEncoder.encode(signedupUser.getPassword()));
         Set<String> strRoles = signedupUser.getRoles();
         Set<Role> roles = new HashSet<>();
         if(strRoles==null){

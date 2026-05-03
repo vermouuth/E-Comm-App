@@ -1,29 +1,27 @@
 package com.ecomm.sb_ecomm.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
-@AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class Role {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-
-    @Column(name = "role_id")
-    private int roleId;
+@SuperBuilder
+@Table(name = "roles")
+@EqualsAndHashCode(callSuper = true)
+public class Role  extends BaseEntity{
 
     @ToString.Exclude
     @Column(length = 20,name = "role_name")
     @Enumerated(EnumType.STRING)
     private AppRole roleName;
 
-
-    public Role(AppRole appRole) {
-        this.roleName = appRole;
+    public Role(AppRole roleName)
+    {
+        this.roleName = roleName;
     }
+
+
+
 }
