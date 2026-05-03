@@ -2,28 +2,21 @@ package com.ecomm.sb_ecomm.models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "products")
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Product {
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class Product  extends BaseEntity{
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "product_id")
-    private Long productId;
 
     @NotBlank
     @Size(min = 3 , max = 160 , message = "Product name must contain at least 3 letters")
@@ -58,7 +51,7 @@ public class Product {
 
     @ManyToOne()
     @JoinColumn(name = "user_id" )
-    private User user;
+    private Users uniqueUser;
 
     @OneToMany(mappedBy = "product" , cascade = {CascadeType.PERSIST , CascadeType.MERGE} , fetch = FetchType.LAZY)
     private List<CartItem> cartItems = new ArrayList<>();

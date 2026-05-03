@@ -110,7 +110,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = this.productRepository.findById(productId).orElseThrow(()-> new ApiException("Product with id " + productId + " does not exist"));
 
         List<Cart> carts = this.cartRepository.findCartsByProductId(productId);
-        carts.forEach(cart -> this.cartServices.deleteProductFromCart(cart.getCartId(), productId));
+        carts.forEach(cart -> this.cartServices.deleteProductFromCart(cart.getId(), productId));
 
         this.productRepository.delete(product);
 
@@ -134,7 +134,7 @@ public class ProductServiceImpl implements ProductService {
         List<Cart> carts = this.cartRepository.findCartsByProductId(productId);
 
 
-        carts.forEach((cart -> {this.cartServices.updateProductInCarts(cart.getCartId() , productId);}));
+        carts.forEach((cart -> {this.cartServices.updateProductInCarts(cart.getId() , productId);}));
 
         return this.modelMapper.map(productFromDatabase, ProductDto.class);
 

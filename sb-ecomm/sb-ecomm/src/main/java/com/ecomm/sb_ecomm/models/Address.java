@@ -2,10 +2,8 @@ package com.ecomm.sb_ecomm.models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,12 +13,10 @@ import java.util.Set;
 @NoArgsConstructor
 @Data
 @Table(name = "addresses")
-public class Address {
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class Address extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "address_id")
-    private Long addressId;
 
     @Size(min = 5, message = "Street must contain minimum 5 characters ")
     private String street;
@@ -39,7 +35,7 @@ public class Address {
 
     @ToString.Exclude
     @ManyToMany(mappedBy = "addresses")
-    private Set<User> users = new HashSet<>();
+    private Set<Users> users = new HashSet<>();
 
 
 }

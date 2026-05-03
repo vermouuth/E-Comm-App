@@ -4,27 +4,24 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
-@Data
 @Table(name = "users" , uniqueConstraints = {
         @UniqueConstraint(columnNames = "username"),
         @UniqueConstraint(columnNames = "email")
 })
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    Long userId;
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+
+public class Users extends BaseEntity {
 
     @Column(unique = true)
     @Size(min = 5 , max = 20)
@@ -39,7 +36,7 @@ public class User {
     @Column(name = "email")
     String email;
 
-    public User(String username, String password, String email) {
+    public Users(String username, String password, String email) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -51,7 +48,7 @@ public class User {
     inverseJoinColumns = @JoinColumn (name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
-    @OneToMany(mappedBy = "user",
+    @OneToMany(mappedBy = "uniqueUser",
     cascade = {CascadeType.PERSIST,CascadeType.MERGE},
     fetch = FetchType.EAGER,
     orphanRemoval = true)
@@ -65,7 +62,7 @@ public class User {
     private Set<Address> addresses = new HashSet<>();
 
     @ToString.Exclude
-    @OneToOne(mappedBy = "user" , cascade = {CascadeType.PERSIST ,CascadeType.MERGE,CascadeType.REMOVE} , fetch = FetchType.EAGER , orphanRemoval = true)
+    @OneToOne(mappedBy = "uniqueUser" , cascade = {CascadeType.PERSIST ,CascadeType.MERGE,CascadeType.REMOVE} , fetch = FetchType.EAGER , orphanRemoval = true)
     private Cart cart;
 
 

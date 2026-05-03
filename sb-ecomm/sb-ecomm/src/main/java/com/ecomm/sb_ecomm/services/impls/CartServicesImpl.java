@@ -5,7 +5,6 @@ import com.ecomm.sb_ecomm.exceptions.newexceptions.ApiException;
 import com.ecomm.sb_ecomm.exceptions.newexceptions.ResourceNotFoundException;
 import com.ecomm.sb_ecomm.models.*;
 import com.ecomm.sb_ecomm.payload.dto.CartDto;
-import com.ecomm.sb_ecomm.payload.dto.CartItemDto;
 import com.ecomm.sb_ecomm.payload.dto.ProductDto;
 import com.ecomm.sb_ecomm.repositories.CartItemRepository;
 import com.ecomm.sb_ecomm.repositories.CartRepository;
@@ -50,7 +49,7 @@ public class CartServicesImpl implements CartServices {
            return cart;
 
         Cart newCart = new Cart();
-        newCart.setUser(authUtils.loggedInUser());
+        newCart.setUniqueUser(authUtils.loggedInUser());
         newCart.setTotalPrice(0.00);
         return cartRepository.save(newCart);
 
@@ -67,7 +66,7 @@ public class CartServicesImpl implements CartServices {
        if(productFromDB.getQuantity() == 0 )
            throw new ApiException("Product " + productFromDB.getProductName() + " is not available!");
 
-       CartItem  cartItem = cartItemRepository.findByCartIdAndProductId(cart.getCartId(), productId);
+       CartItem  cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId);
 
        if(cartItem != null)
            throw  new ApiException("Product " + productFromDB.getProductName() + " is already in Cart");
@@ -129,6 +128,7 @@ public class CartServicesImpl implements CartServices {
                     })
                     .toList();
 
+            cartDto.setTotalPrice(this.calculateTotalPrice(cart));
             cartDto.setProducts(productDtoList);
             return cartDto;
 
@@ -138,7 +138,7 @@ public class CartServicesImpl implements CartServices {
     @Override
     @Transactional
     public CartDto getUserCart() {
-        User user = authUtils.loggedInUser();
+        Users user = authUtils.loggedInUser();
         if (user == null)
             throw new ApiException("User not logged in");
 
@@ -155,8 +155,6 @@ public class CartServicesImpl implements CartServices {
                                 .toList();
 
         userCart.setTotalPrice(this.calculateTotalPrice(userCart));
-        userCart = this.cartRepository.save(userCart);
-
         cartDto.setProducts(productsDtoList);
         return cartDto;
     }
@@ -211,7 +209,7 @@ public class CartServicesImpl implements CartServices {
         if (cart == null)
             throw new ApiException("Cart is not fount !!!");
 
-         CartItem cartItem =  cartItemRepository.findByCartIdAndProductId(cart.getCartId(), productId);
+         CartItem cartItem =  cartItemRepository.findByCartIdAndProductId(cart.getId(), productId);
          if(cartItem == null)
                 throw  new ApiException("Product is not fount !!!");
 
@@ -248,7 +246,7 @@ public class CartServicesImpl implements CartServices {
         Cart userCart = getOrCreateCart();
 
         CartItem cartItem = userCart.getCartItems().stream()
-                .filter(item -> item.getProduct().getProductId().equals(productId))
+                .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", productId));
 
@@ -280,7 +278,6 @@ public class CartServicesImpl implements CartServices {
         return cartDto;
     }
 
-
     @Transactional
     @Override
     public String deleteProductFromCart(Long cartId, Long productId) {
@@ -305,7 +302,7 @@ public class CartServicesImpl implements CartServices {
         cart = cartRepository.save(cart);
 
 
-        return "Product " + productId + " removed from cart " + cartId + " for user: " + cart.getUser().getEmail();
+        return "Product " + productId + " removed from cart " + cartId + " for user: " + cart.getUniqueUser().getEmail();
     }
 
 

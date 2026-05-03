@@ -6,20 +6,20 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
 @Entity(name = "Categories")
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Category {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "category_id")
-    private Long categoryId;
+@Data
+@SuperBuilder
+@Table(name = "categories")
+@EqualsAndHashCode(callSuper = true)
+public class Category extends BaseEntity {
 
     @NotBlank
     @Size(min = 5 , max = 100 , message = "Category must contain at least 5 letters")

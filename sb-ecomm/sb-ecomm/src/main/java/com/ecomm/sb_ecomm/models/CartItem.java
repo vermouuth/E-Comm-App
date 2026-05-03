@@ -2,17 +2,16 @@ package com.ecomm.sb_ecomm.models;
 
 import jakarta.persistence.*;
 import lombok.*;
-
+import lombok.experimental.SuperBuilder;
 
 @Entity
-@Getter
-@Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class CartItem {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long itemId;
+@AllArgsConstructor
+@Table
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class CartItem extends BaseEntity {
 
     @ManyToOne()
     @JoinColumn(name = "cart_id")
@@ -21,14 +20,6 @@ public class CartItem {
     @ManyToOne()
     @JoinColumn(name = "product_id")
     private Product product;
-
-    public CartItem(Cart cart, Product product, double discount, double productPrice, int quantity) {
-        this.cart = cart;
-        this.product = product;
-        this.discount = discount;
-        this.productPrice = productPrice;
-        this.quantity = quantity;
-    }
 
     private double discount;
 
