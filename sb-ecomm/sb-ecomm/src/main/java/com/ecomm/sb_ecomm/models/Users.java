@@ -8,6 +8,8 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -54,12 +56,8 @@ public class Users extends BaseEntity {
     orphanRemoval = true)
     private Set<Product> products = new HashSet<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE},
-    fetch = FetchType.EAGER)
-    @JoinTable(name = "users_addresses" ,
-    joinColumns = @JoinColumn(name = "user_id"),
-    inverseJoinColumns = @JoinColumn(name = "address_id"))
-    private Set<Address> addresses = new HashSet<>();
+    @OneToMany(mappedBy = "users",cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    private List<Address> addresses;
 
     @ToString.Exclude
     @OneToOne(mappedBy = "uniqueUser" , cascade = {CascadeType.PERSIST ,CascadeType.MERGE,CascadeType.REMOVE} , fetch = FetchType.EAGER , orphanRemoval = true)
