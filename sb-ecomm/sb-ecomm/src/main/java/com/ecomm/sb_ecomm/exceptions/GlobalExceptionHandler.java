@@ -2,7 +2,7 @@ package com.ecomm.sb_ecomm.exceptions;
 
 import com.ecomm.sb_ecomm.exceptions.newexceptions.ApiException;
 import com.ecomm.sb_ecomm.exceptions.newexceptions.ResourceNotFoundException;
-import com.ecomm.sb_ecomm.payload.responses.ApiResponse;
+import com.ecomm.sb_ecomm.common.responses.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.TransactionSystemException;

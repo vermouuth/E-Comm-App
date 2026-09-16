@@ -1,7 +1,7 @@
 package com.ecomm.sb_ecomm.config;
 
-import com.ecomm.sb_ecomm.models.Users;
-import com.ecomm.sb_ecomm.repositories.UserRepository;
+import com.ecomm.sb_ecomm.auth.model.Users;
+import com.ecomm.sb_ecomm.auth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
