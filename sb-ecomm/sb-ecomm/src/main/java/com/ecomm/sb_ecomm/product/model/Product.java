@@ -20,6 +20,7 @@ import java.util.List;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
+
 public class Product  extends BaseEntity {
 
 
@@ -54,8 +55,6 @@ public class Product  extends BaseEntity {
     @Min(value = 0)
     @Column(nullable = false)
     private Integer reservedQuantity;
-
-
 
     @ManyToOne()
     @JoinColumn(name = "category_id", nullable = false)

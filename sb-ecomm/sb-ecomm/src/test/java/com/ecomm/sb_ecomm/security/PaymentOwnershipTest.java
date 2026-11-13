@@ -119,7 +119,7 @@ class PaymentOwnershipTest {
 
         PaymentDto dto = service.getPayment(ME, ORDER_ID);
 
-        assertThat(dto.getPaymentId()).isEqualTo(77L);
+        assertThat(dto.getId()).isEqualTo(77L);
     }
 
     @Test

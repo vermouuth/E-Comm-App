@@ -17,10 +17,14 @@ import com.ecomm.sb_ecomm.product.payload.ProductDto;
 import com.ecomm.sb_ecomm.order.repository.OrderRepository;
 import com.ecomm.sb_ecomm.product.repository.ProductRepository;
 import com.ecomm.sb_ecomm.validators.OrderStatusTransitionValidator;
-import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -30,6 +34,7 @@ import java.util.stream.Collectors;
 @Service
 public class OrderServiceImpl  implements OrderService {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
 
     private OrderRepository orderRepository;
     private ModelMapper modelMapper;
@@ -38,9 +43,11 @@ public class OrderServiceImpl  implements OrderService {
     private final OrderStatusTransitionValidator orderStatusTransitionValidator;
     private final CartRepository cartRepository;
     private final AddressRepository addressRepository;
+    private final TransactionTemplate transactionTemplate;
 
     public OrderServiceImpl(OrderRepository orderRepository, ModelMapper modelMapper
-            , AuthUtils authUtils , ProductRepository productRepository, OrderStatusTransitionValidator orderStatusTransitionValidator, CartRepository cartRepository, AddressRepository addressRepository) {
+            , AuthUtils authUtils , ProductRepository productRepository, OrderStatusTransitionValidator orderStatusTransitionValidator, CartRepository cartRepository, AddressRepository addressRepository,
+            PlatformTransactionManager transactionManager) {
         this.orderRepository = orderRepository;
         this.modelMapper = modelMapper;
         this.authUtils = authUtils;
@@ -48,6 +55,7 @@ public class OrderServiceImpl  implements OrderService {
         this.orderStatusTransitionValidator = orderStatusTransitionValidator;
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     private void confirmReservedProducts(Orders order)
@@ -156,7 +164,7 @@ public class OrderServiceImpl  implements OrderService {
 
     private OrderDto getOrderDto(Orders order) {
         OrderDto dto = new OrderDto();
-        dto.setOrderId(order.getId());
+        dto.setId(order.getId());
         dto.setEmail(order.getEmail());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setOrderStatus(String.valueOf(order.getOrderStatus()));
@@ -172,7 +180,7 @@ public class OrderServiceImpl  implements OrderService {
                 .map(oi -> {
                     ProductDto p = new ProductDto();
                     p.setProductName(oi.getProduct().getProductName());
-                    p.setQuantity(oi.getQuantity());
+                    p.setStockQuantity(oi.getQuantity());
                     p.setPrice(oi.getProductPrice());
                     p.setDiscount(oi.getDiscount());
                     return p;
@@ -183,8 +191,8 @@ public class OrderServiceImpl  implements OrderService {
 
     }
 
-    @Transactional
-    public OrderDto createOrder(String idempotencyKey, Users loggedInUser) {
+    // Must run inside a transaction (see placeOrder): the product row locks and the stock check rely on it.
+    private OrderDto createOrder(String idempotencyKey, Users loggedInUser) {
 
         Cart cart = getExistedCart(loggedInUser.getEmail());
 
@@ -214,6 +222,11 @@ public class OrderServiceImpl  implements OrderService {
         // 2. Only the winner reaches here. Now it's safe to lock products and reserve.
         reserveItemQuantity(orderItems);
 
+        // 3. The cart has become this order: empty it in the same transaction (orphanRemoval deletes the items).
+        cart.getCartItems().clear();
+        cart.setTotalPrice(0.0);
+        cartRepository.save(cart);
+
         return getOrderDto(order);
     }
 
@@ -225,7 +238,7 @@ public class OrderServiceImpl  implements OrderService {
                    List<ProductDto> productDtoList = orders.getOrderItems().stream()
                            .map(orderItem -> {
                                ProductDto productDto = modelMapper.map(orderItem.getProduct(), ProductDto.class);
-                               productDto.setQuantity(orderItem.getQuantity());
+                               productDto.setStockQuantity(orderItem.getQuantity());
                                return productDto;
                            }).toList();
                    OrderDto orderDto = this.modelMapper.map(orders, OrderDto.class);
@@ -284,7 +297,9 @@ public class OrderServiceImpl  implements OrderService {
        }
 
        try {
-         return createOrder(idempotencyKey, loggedInUser);
+         // Not this.createOrder() under @Transactional: a self-call skips the proxy, so there would be no transaction.
+         // The catch stays outside the transaction: after a unique violation Postgres aborts the whole transaction.
+         return transactionTemplate.execute(status -> createOrder(idempotencyKey, loggedInUser));
        }
        catch (DataIntegrityViolationException e) {
            return orderRepository.findByIdempotencyKeyAndUserIdFetchItems(idempotencyKey, loggedInUser.getId())
@@ -311,8 +326,16 @@ public class OrderServiceImpl  implements OrderService {
     }
 
     @Override
+    @Transactional
     public void confirmOrderAfterPayment(Long orderId) {
         Orders order = getExistedOrder(orderId);
+
+        // Only a PENDING order still holds a reservation. An EXPIRED/CANCELLED one already released its stock.
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            log.error("Payment captured for order {} in status {}: stock untouched, payment {} needs a refund",
+                    orderId, order.getOrderStatus(), order.getPayment() == null ? null : order.getPayment().getId());
+            return;
+        }
 
         confirmReservedProducts(order);
 

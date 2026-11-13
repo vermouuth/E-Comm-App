@@ -30,11 +30,17 @@ public class AddressServicesImpl implements AddressServices {
     }
 
     @Override
+    @Transactional
     public AddressDto addAddress(AddressDto address) {
 
         Users loggedInUser = this.authUtils.loggedInUser();
         Address newAddress = modelMapper.map(address, Address.class);
         newAddress.setUsers(loggedInUser);
+        // One default per user: placing an order looks the default up and fails if there are two.
+        if (Boolean.TRUE.equals(newAddress.getIsDefault())) {
+            this.addressRepository.findByUsersIdAndIsDefaultTrue(loggedInUser.getId())
+                    .ifPresent(previous -> previous.setIsDefault(false));
+        }
         newAddress = this.addressRepository.save(newAddress);
         return  modelMapper.map(newAddress,AddressDto.class);
 

@@ -36,6 +36,10 @@ import java.util.List;
 )
 public class Orders extends BaseEntity {
 
+    // Optimistic lock: OrderExpiryJob and payment confirmation can't both change the same order.
+    @Version
+    private long version;
+
     @Email
     @Column(nullable = false)
     private String email;

@@ -17,8 +17,6 @@ import java.util.Date;
 @SuperBuilder
 public class BaseEntity {
 
-
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @SequenceGenerator(allocationSize = 50, name = "")

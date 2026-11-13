@@ -4,7 +4,6 @@ import com.ecomm.sb_ecomm.address.model.Address;
 import com.ecomm.sb_ecomm.address.payload.AddressDto;
 import com.ecomm.sb_ecomm.address.repository.AddressRepository;
 import com.ecomm.sb_ecomm.address.services.AddressServicesImpl;
-import com.ecomm.sb_ecomm.auth.model.Users;
 import com.ecomm.sb_ecomm.auth.repository.UserRepository;
 import com.ecomm.sb_ecomm.cart.model.Cart;
 import com.ecomm.sb_ecomm.cart.model.CartItem;
@@ -47,6 +46,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
+import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * The user-facing endpoints added for the storefront: every one of them must be scoped to the
@@ -80,7 +81,7 @@ class UserScopedEndpointsTest {
     void setUp() {
         addressServices = new AddressServicesImpl(addressRepository, userRepository, authUtils, modelMapper);
         orderService = new OrderServiceImpl(orderRepository, modelMapper, authUtils, productRepository,
-                orderStatusTransitionValidator, cartRepository, addressRepository);
+                orderStatusTransitionValidator, cartRepository, addressRepository, mock(PlatformTransactionManager.class));
         cartServicesImpl = new CartServicesImpl(cartRepository, productRepository, cartItemRepository, modelMapper, authUtils);
         productService = new ProductServiceImpl(productRepository, categoryRepository, cartServices,
                 modelMapper, fileService, cartRepository);
@@ -179,7 +180,7 @@ class UserScopedEndpointsTest {
     void getCurrentUserOrder_ofMine_returnsIt() {
         when(orderRepository.findByIdAndUserId(10L, ME)).thenReturn(Optional.of(order(10L)));
 
-        assertThat(orderService.getCurrentUserOrder(10L).getOrderId()).isEqualTo(10L);
+        assertThat(orderService.getCurrentUserOrder(10L).getId()).isEqualTo(10L);
     }
 
     @Test
@@ -188,7 +189,7 @@ class UserScopedEndpointsTest {
 
         List<OrderDto> result = orderService.getCurrentUserOrders();
 
-        assertThat(result).extracting(OrderDto::getOrderId).containsExactly(9L, 5L, 3L);
+        assertThat(result).extracting(OrderDto::getId).containsExactly(9L, 5L, 3L);
         verify(orderRepository).getOrdersByUserId(ME);
     }
 
@@ -199,6 +200,7 @@ class UserScopedEndpointsTest {
         product.setId(productId);
         product.setProductName("Widget");
         product.setStockQuantity(stock);
+        product.setReservedQuantity(0);
 
         CartItem item = new CartItem();
         item.setProduct(product);

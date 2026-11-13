@@ -1,11 +1,8 @@
 package com.ecomm.sb_ecomm.payment.webhook;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
 
 @Service
 public class WebhookEventServiceImpl  implements WebhookEventService {
@@ -15,16 +12,10 @@ public class WebhookEventServiceImpl  implements WebhookEventService {
         this.repository = repository;
     }
 
+    // MANDATORY: the claim must commit or roll back together with the work it guards.
     @Override
-    @Transactional (propagation = Propagation.REQUIRES_NEW)
-    public void claim(String eventId) {
-        try {
-            WebhookEvent webhookEvent = new WebhookEvent();
-            webhookEvent.setEventId(eventId);
-            webhookEvent.setReceivedAt(Instant.now());
-            repository.saveAndFlush(webhookEvent);
-        }catch (DataIntegrityViolationException ex){
-            throw new DuplicateWebhookEventException(eventId);
-        }
+    @Transactional(propagation = Propagation.MANDATORY)
+    public boolean claim(String eventId) {
+        return repository.claim(eventId) == 1;
     }
 }
