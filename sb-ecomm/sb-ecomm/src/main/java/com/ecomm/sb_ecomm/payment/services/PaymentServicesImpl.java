@@ -41,6 +41,7 @@ public class PaymentServicesImpl implements PaymentService {
     private final OrderService orderService;
     private final MockGatewayServices mockGatewayServices;
     private final ApplicationEventPublisher eventPublisher;
+    private final AuthUtils authUtils;
 
     @Value("${mock.gateway.api-key}")
     private String gatewayApiKey;
@@ -48,9 +49,9 @@ public class PaymentServicesImpl implements PaymentService {
     private String defaultCurrency;
 
     public PaymentServicesImpl(PaymentRepository paymentRepository, ModelMapper modelMapper,
-                               OrderRepository orderRepository, AuthUtils authUtils,
+                               OrderRepository orderRepository,
                                PaymentStatusTransitionValidator paymentStatusTransitionValidator, ProductRepository productRepository,
-                               OrderService orderService, MockGatewayServices mockGatewayServices, ApplicationEventPublisher eventPublisher) {
+                               OrderService orderService, MockGatewayServices mockGatewayServices, ApplicationEventPublisher eventPublisher, AuthUtils authUtils) {
         this.modelMapper = modelMapper;
         this.paymentRepository = paymentRepository;
         this.orderRepository = orderRepository;
@@ -59,6 +60,7 @@ public class PaymentServicesImpl implements PaymentService {
         this.orderService = orderService;
         this.mockGatewayServices = mockGatewayServices;
         this.eventPublisher = eventPublisher;
+        this.authUtils = authUtils;
     }
 
 
@@ -83,8 +85,10 @@ public class PaymentServicesImpl implements PaymentService {
     @Override
     public PaymentDto initiatePayment(Long orderId , String paymentMethod) {
 
+        // Scope the lookup to the caller: someone else's order looks exactly like a missing one.
+        Long userId = this.authUtils.loggedInUserId();
         Orders freshPlacedOrder = this.orderRepository
-                .findById(orderId)
+                .findByIdAndUserId(orderId, userId)
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Order" , "orderId" , orderId)
                 );
@@ -126,8 +130,17 @@ public class PaymentServicesImpl implements PaymentService {
     }
 
     @Override
+    @Transactional
     public PaymentDto getPayment(Long userId, Long orderId) {
-        return null;
+        Orders order = this.orderRepository.findByIdAndUserId(orderId, userId).orElseThrow(
+                () -> new ResourceNotFoundException("Order" , "orderId" , orderId));
+
+        Payment payment = order.getPayment();
+        if (payment == null) {
+            throw new ResourceNotFoundException("Payment" , "orderId" , orderId);
+        }
+
+        return getPaymentDto(payment);
     }
 
     @Override
@@ -139,8 +152,6 @@ public class PaymentServicesImpl implements PaymentService {
     public List<PaymentDto> getAllUserPayments(Long userId) {
         return List.of();
     }
-
-
 
     private Payment getExistedPayment(Long paymentId){
         return  paymentRepository
@@ -177,7 +188,6 @@ public class PaymentServicesImpl implements PaymentService {
     */
     @Override
     @Transactional
-
     @Retryable(
             retryFor = ObjectOptimisticLockingFailureException.class,
             maxAttempts = 3,
@@ -202,7 +212,7 @@ public class PaymentServicesImpl implements PaymentService {
 
     @Override
     public void deletePayment(Long orderId, Long userId) {
-
+        
     }
 }
 

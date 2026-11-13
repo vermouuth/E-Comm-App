@@ -28,6 +28,8 @@ Thumbs.db
 .env
 application.properties
 application.yml
+application-*.properties
+application-*.yml
 
 # Maven / Gradle caches (optional)
 .mvn/

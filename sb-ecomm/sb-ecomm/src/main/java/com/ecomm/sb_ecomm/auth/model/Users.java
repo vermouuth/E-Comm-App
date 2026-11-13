@@ -39,6 +39,7 @@ public class Users extends BaseEntity {
 
     @NotBlank
     @Size(min = 8, max = 150)
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     String password;
 
     @NotBlank

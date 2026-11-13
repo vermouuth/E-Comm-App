@@ -72,11 +72,20 @@ public class ProductServiceImpl implements ProductService {
         Product productEntity = this.modelMapper.map(productDto, Product.class);
         productEntity.setCategory(categoryFromDb);
         productEntity.setImage("default.png");
+        productEntity.setReservedQuantity(0);
+        productEntity.setStockQuantity(0);
         productEntity.setSpecialPrice(recalculateSpecialPrice(productEntity.getPrice(), productEntity.getDiscount()));
 
 
         productEntity = this.productRepository.save(productEntity);
         return this.modelMapper.map(productEntity, ProductDto.class);
+    }
+
+    @Override
+    public ProductDto getProductById(Long productId) {
+        Product product = this.productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "ProductId", productId));
+        return this.modelMapper.map(product, ProductDto.class);
     }
 
     @Override

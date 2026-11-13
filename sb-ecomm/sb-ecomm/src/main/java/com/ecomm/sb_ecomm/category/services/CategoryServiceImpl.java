@@ -12,7 +12,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import javax.swing.text.html.Option;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -46,16 +49,18 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto addCategory(CategoryDto categoryDto) {
 
-
-        Category category = this.categoryRepository.findByCategoryName(categoryDto.getCategoryName());
-
-        if(category != null){
+        Optional<Category> existing =
+                categoryRepository.findByCategoryName(categoryDto.getCategoryName());
+        if (existing.isPresent()) {
             throw new ApiException("Category already exists");
         }
 
-        category = this.modelMapper.map(categoryDto, Category.class);
-        this.categoryRepository.save(category);
-        return this.modelMapper.map(category, CategoryDto.class);
+        Category category = new Category();
+        category.setCategoryName(categoryDto.getCategoryName());
+        Category saved = categoryRepository.save(category);
+
+        return new CategoryDto(saved.getId(),saved.getCategoryName());
+
     }
 
     @Override

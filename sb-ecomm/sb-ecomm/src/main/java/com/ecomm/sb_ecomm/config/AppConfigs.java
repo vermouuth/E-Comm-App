@@ -5,6 +5,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.annotation.EnableRetry;
 
 @Configuration
 public class AppConfigs {
@@ -22,4 +23,5 @@ public class AppConfigs {
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
     }
+
 }

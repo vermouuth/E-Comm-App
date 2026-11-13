@@ -1,8 +1,10 @@
 package com.ecomm.sb_ecomm.payment.webhook;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Hidden
 @RestController
 @RequestMapping("/api/webhooks/mock")
 public class WebhookController {

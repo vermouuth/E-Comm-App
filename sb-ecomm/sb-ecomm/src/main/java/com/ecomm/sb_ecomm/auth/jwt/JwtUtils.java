@@ -2,6 +2,7 @@ package com.ecomm.sb_ecomm.auth.jwt;
 
 import com.ecomm.sb_ecomm.auth.services.UserDetailsImpl;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -18,6 +19,7 @@ import org.springframework.web.util.WebUtils;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
+import java.time.Duration;
 import java.util.Date;
 
 @Component
@@ -34,13 +36,16 @@ public class JwtUtils {
     @Value("${spring.app.ecom.jwtCookeName}")
     private String jwtCookie;
 
+    // Secure by default; only the dev profile turns it off (plain-HTTP localhost).
+    @Value("${spring.app.ecom.cookieSecure:true}")
+    private boolean cookieSecure;
+
 
     private Key key(){return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));}
 
     public String getJwtFromCookie(HttpServletRequest request) {
         Cookie cookie = WebUtils.getCookie(request, jwtCookie);
         if (cookie != null) {
-            System.out.println(cookie.getName() + " : " + cookie.getValue());
             return cookie.getValue();
         }
         return null;
@@ -58,19 +63,27 @@ public class JwtUtils {
     public ResponseCookie generateJwtCookie(UserDetailsImpl userPrincipal) {
         String jwt = this.generateTokenFromUsername(userPrincipal.getUsername());
 
-        return ResponseCookie
-                .from(jwtCookie,jwt)
-                .path("/api")
-                .maxAge(24 * 60 * 60)
-                .httpOnly(false)
+        // The cookie lives exactly as long as the token inside it.
+        return baseCookie(jwt)
+                .maxAge(Duration.ofMillis(this.jwtExpirationDate))
                 .build();
     }
 
     public ResponseCookie getCleanCookie(){
-        return ResponseCookie
-                .from(jwtCookie,null)
-                .path("/api")
+        return baseCookie("")
+                .maxAge(Duration.ZERO)
                 .build();
+    }
+
+    // HttpOnly: JavaScript (and therefore XSS) cannot read the token.
+    // SameSite=Lax: the cookie is not sent on cross-site POSTs (CSRF is disabled for this stateless API).
+    private ResponseCookie.ResponseCookieBuilder baseCookie(String value) {
+        return ResponseCookie
+                .from(jwtCookie, value)
+                .path("/api")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax");
     }
 
     public String getUsernameFromJwtToken(String token){
@@ -78,20 +91,22 @@ public class JwtUtils {
                 .verifyWith((SecretKey) this.key())
                 .build()
                 .parseSignedClaims(token)
-                .getBody().getSubject();
+                .getPayload()
+                .getSubject();
     }
 
     public Boolean validateToken(String token){
         try{
-            System.out.println("Validating Token");
             Jwts.parser()
                     .verifyWith((SecretKey) this.key())
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token);
             return true;
-        }catch (MalformedJwtException e)   { logger.error("Invalid JWT token : {}" , e.getMessage());}
-        catch (ExpiredJwtException e)      { logger.error("Expired JWT token : {}" , e.getMessage());}
+        }catch (ExpiredJwtException e)     { logger.error("Expired JWT token : {}" , e.getMessage());}
+        catch (MalformedJwtException e)    { logger.error("Invalid JWT token : {}" , e.getMessage());}
         catch (UnsupportedJwtException e)  { logger.error("Unsupported JWT token : {}" , e.getMessage());}
+        // Anything else the parser rejects, notably a bad signature (SignatureException).
+        catch (JwtException e)             { logger.error("JWT validation failed : {}" , e.getMessage());}
         catch (IllegalArgumentException e) { logger.error("JWT claims string is empty: {}" , e.getMessage());}
 
         return false;

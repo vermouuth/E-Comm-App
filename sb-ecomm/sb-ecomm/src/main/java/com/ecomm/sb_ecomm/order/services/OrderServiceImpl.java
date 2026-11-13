@@ -7,6 +7,7 @@ import com.ecomm.sb_ecomm.cart.model.Cart;
 import com.ecomm.sb_ecomm.cart.repository.CartRepository;
 import com.ecomm.sb_ecomm.config.AuthUtils;
 import com.ecomm.sb_ecomm.exceptions.newexceptions.ApiException;
+import com.ecomm.sb_ecomm.exceptions.newexceptions.ResourceNotFoundException;
 import com.ecomm.sb_ecomm.order.model.OrderItem;
 import com.ecomm.sb_ecomm.order.model.Orders;
 import com.ecomm.sb_ecomm.order.model.OrderStatus;
@@ -238,6 +239,25 @@ public class OrderServiceImpl  implements OrderService {
         return this.orderRepository.getOrdersByUserId(userId)
                 .stream().map(this::getOrderDto)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<OrderDto> getCurrentUserOrders() {
+        Long userId = this.authUtils.loggedInUserId();
+        return this.orderRepository.getOrdersByUserId(userId).stream()
+                .sorted(Comparator.comparing(Orders::getId).reversed())
+                .map(this::getOrderDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public OrderDto getCurrentUserOrder(Long orderId) {
+        Long userId = this.authUtils.loggedInUserId();
+        Orders order = this.orderRepository.findByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "orderId", orderId));
+        return getOrderDto(order);
     }
 
     @Override
