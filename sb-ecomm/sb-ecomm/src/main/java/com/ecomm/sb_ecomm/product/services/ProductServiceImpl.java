@@ -73,11 +73,10 @@ public class ProductServiceImpl implements ProductService {
         productEntity.setCategory(categoryFromDb);
         productEntity.setImage("default.png");
         productEntity.setReservedQuantity(0);
-        productEntity.setStockQuantity(0);
+        productEntity.setStockQuantity(productDto.getStockQuantity());
         productEntity.setSpecialPrice(recalculateSpecialPrice(productEntity.getPrice(), productEntity.getDiscount()));
+        this.productRepository.save(productEntity);
 
-
-        productEntity = this.productRepository.save(productEntity);
         return this.modelMapper.map(productEntity, ProductDto.class);
     }
 
@@ -131,7 +130,7 @@ public class ProductServiceImpl implements ProductService {
 
         productFromDatabase.setProductName(productDto.getProductName());
         productFromDatabase.setDescription(productDto.getDescription());
-        productFromDatabase.setStockQuantity(productDto.getQuantity());
+        productFromDatabase.setStockQuantity(productDto.getStockQuantity());
         productFromDatabase.setPrice(productDto.getPrice());
         productFromDatabase.setDiscount(productDto.getDiscount());
         productFromDatabase.setSpecialPrice(this.recalculateSpecialPrice(productFromDatabase.getPrice(),productFromDatabase.getDiscount()));

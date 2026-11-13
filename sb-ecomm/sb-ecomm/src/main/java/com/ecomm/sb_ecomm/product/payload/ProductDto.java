@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ProductDto {
 
-    private Long productId;
+    private Long id;
     @NotBlank(message = "productName is required")
     @Size(min = 3, max = 160, message = "productName must be 3-160 characters")
     private String productName;
@@ -19,7 +19,7 @@ public class ProductDto {
     private String description;
     @NotNull(message = "quantity is required")
     @Min(value = 0, message = "quantity must be 0 or more")
-    private Integer quantity;
+    private Integer stockQuantity;
     @NotNull(message = "discount is required")
     @DecimalMin(value = "0.0", message = "discount must be between 0 and 100")
     @DecimalMax(value = "100.0", message = "discount must be between 0 and 100")

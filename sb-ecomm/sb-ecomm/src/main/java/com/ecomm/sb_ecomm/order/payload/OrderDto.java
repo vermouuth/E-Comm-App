@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderDto {
 
-    private Long orderId;
+    private Long id;
     private String email;
     private Double totalAmount;
     private String orderStatus;

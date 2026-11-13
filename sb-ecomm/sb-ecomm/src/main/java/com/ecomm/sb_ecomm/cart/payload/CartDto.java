@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CartDto {
-    Long cartId;
+    Long id;
     List<ProductDto> products;
     private double totalPrice;
 }

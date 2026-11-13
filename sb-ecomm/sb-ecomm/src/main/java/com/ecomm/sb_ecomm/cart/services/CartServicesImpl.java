@@ -65,7 +65,9 @@ public class CartServicesImpl implements CartServices {
        Product productFromDB = productRepository.findById(productId).
                orElseThrow(() -> new ResourceNotFoundException("Product" , "ProductId", productId));
 
-       if(productFromDB.getStockQuantity() == 0 )
+       // Units held by unpaid orders can't be sold again.
+       int freeStock = productFromDB.getStockQuantity() - productFromDB.getReservedQuantity();
+       if(freeStock <= 0 )
            throw new ApiException("Product " + productFromDB.getProductName() + " is not available!");
 
        CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId);
@@ -73,9 +75,9 @@ public class CartServicesImpl implements CartServices {
        if(cartItem != null)
            throw  new ApiException("Product " + productFromDB.getProductName() + " is already in Cart");
 
-       if(quantity > productFromDB.getStockQuantity())
+       if(quantity > freeStock)
            throw  new ApiException("Please , make an order of the "  + productFromDB.getProductName() +
-                   " less than or equal to the quantity "  + productFromDB.getStockQuantity() + ".");
+                   " less than or equal to the quantity "  + freeStock + ".");
 
 
       CartItem newCartItem = new CartItem();
@@ -100,7 +102,7 @@ public class CartServicesImpl implements CartServices {
             item ->
             {
                 ProductDto productDto = modelMapper.map(item.getProduct(), ProductDto.class);
-                productDto.setQuantity(item.getQuantity());
+                productDto.setStockQuantity(item.getQuantity());
                 productDto.setPrice(item.getProductPrice());
                 productDto.setDiscount(item.getDiscount());
                 return productDto;
@@ -127,7 +129,7 @@ public class CartServicesImpl implements CartServices {
             List<ProductDto> productDtoList = cart.getCartItems().stream()
                     .map(item -> {
                         ProductDto productDto = this.modelMapper.map(item.getProduct(), ProductDto.class);
-                        productDto.setQuantity(item.getQuantity());
+                        productDto.setStockQuantity(item.getQuantity());
                         productDto.setPrice(item.getProductPrice());
                         productDto.setDiscount(item.getDiscount());
                         return productDto;
@@ -155,7 +157,7 @@ public class CartServicesImpl implements CartServices {
         List<ProductDto> productsDtoList = userCart.getCartItems().stream()
                         .map(item ->{
                             ProductDto productDto = modelMapper.map(item.getProduct(), ProductDto.class);
-                            productDto.setQuantity(item.getQuantity());
+                            productDto.setStockQuantity(item.getQuantity());
                             productDto.setPrice(item.getProductPrice());
                             productDto.setDiscount(item.getDiscount());
                             return productDto;
@@ -183,7 +185,7 @@ public class CartServicesImpl implements CartServices {
                 .map(item -> {
 
                     ProductDto productDto = this.modelMapper.map(item.getProduct(), ProductDto.class);
-                    productDto.setQuantity(item.getQuantity());
+                    productDto.setStockQuantity(item.getQuantity());
                     productDto.setPrice(item.getProductPrice());
                     productDto.setDiscount(item.getDiscount());
                     return productDto;
@@ -240,7 +242,7 @@ public class CartServicesImpl implements CartServices {
         Stream<ProductDto>  productDtoStream = cart.getCartItems().stream()
                 .map(item ->{
                    ProductDto productDto = this.modelMapper.map(item.getProduct(), ProductDto.class);
-                   productDto.setQuantity(item.getQuantity());
+                   productDto.setStockQuantity(item.getQuantity());
                    productDto.setPrice(item.getProductPrice());
                    productDto.setDiscount(item.getDiscount());
                    return productDto;
@@ -269,7 +271,7 @@ public class CartServicesImpl implements CartServices {
         if (quantity == 0) {
             userCart.getCartItems().remove(cartItem); // orphanRemoval handles delete
         } else {
-            int stock = cartItem.getProduct().getStockQuantity();
+            int stock = cartItem.getProduct().getStockQuantity() - cartItem.getProduct().getReservedQuantity();
             if (quantity > stock)
                 throw new ApiException("Please , make an order of the " + cartItem.getProduct().getProductName() +
                         " less than or equal to the quantity " + stock + ".");
@@ -289,7 +291,7 @@ public class CartServicesImpl implements CartServices {
         Stream<ProductDto> productDtoList = userCart.getCartItems().stream()
                 .map(item -> {
                   ProductDto productDto =   modelMapper.map(item.getProduct(), ProductDto.class);
-                  productDto.setQuantity(item.getQuantity());
+                  productDto.setStockQuantity(item.getQuantity());
                     productDto.setPrice(item.getProductPrice());
                     productDto.setDiscount(item.getDiscount());
                   return productDto;

@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto updateCategory(Long id , CategoryDto categoryDto) {
-        Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category","CategoryId" , categoryDto.getCategoryId()));
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category","CategoryId" , categoryDto.getId()));
         category.setCategoryName(categoryDto.getCategoryName());
         category =  categoryRepository.save(category);
         return this.modelMapper.map(category, CategoryDto.class);
@@ -55,11 +54,11 @@ public class CategoryServiceImpl implements CategoryService {
             throw new ApiException("Category already exists");
         }
 
-        Category category = new Category();
+        Category category = this.modelMapper.map(categoryDto, Category.class);
         category.setCategoryName(categoryDto.getCategoryName());
-        Category saved = categoryRepository.save(category);
+        this.categoryRepository.save(category);
 
-        return new CategoryDto(saved.getId(),saved.getCategoryName());
+        return this.modelMapper.map(category, CategoryDto.class);
 
     }
 

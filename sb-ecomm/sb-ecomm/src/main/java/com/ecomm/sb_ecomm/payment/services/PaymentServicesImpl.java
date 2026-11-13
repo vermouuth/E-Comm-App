@@ -17,7 +17,7 @@ import com.ecomm.sb_ecomm.payment.repository.PaymentRepository;
 import com.ecomm.sb_ecomm.product.repository.ProductRepository;
 import com.ecomm.sb_ecomm.order.services.OrderService;
 import com.ecomm.sb_ecomm.validators.PaymentStatusTransitionValidator;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -72,7 +72,7 @@ public class PaymentServicesImpl implements PaymentService {
 
     private PaymentDto getPaymentDto(Payment payment){
         PaymentDto paymentDto = new PaymentDto();
-        paymentDto.setPaymentId(payment.getId());
+        paymentDto.setId(payment.getId());
         paymentDto.setPaymentMethod(payment.getPaymentMethod().toString());
         paymentDto.setPaymentStaus(payment.getPaymentStatus().toString());
         paymentDto.setAmount(payment.getAmount());
@@ -83,7 +83,13 @@ public class PaymentServicesImpl implements PaymentService {
 
 
     @Override
+    @Transactional
     public PaymentDto initiatePayment(Long orderId , String paymentMethod) {
+
+        PaymentMethod method = this.PAYMENT_METHODS.get(paymentMethod.trim().toUpperCase());
+        if (method == null) {
+            throw new ApiException("Unsupported payment method: " + paymentMethod + ". Use one of " + PAYMENT_METHODS.keySet());
+        }
 
         // Scope the lookup to the caller: someone else's order looks exactly like a missing one.
         Long userId = this.authUtils.loggedInUserId();
@@ -97,10 +103,17 @@ public class PaymentServicesImpl implements PaymentService {
             throw new ApiException("Order is not payable in status: " + freshPlacedOrder.getOrderStatus());
         }
 
+        // A retried checkout must not open a second payment (the customer could be charged twice).
+        Payment existing = freshPlacedOrder.getPayment();
+        if (existing != null && (existing.getPaymentStatus() == PaymentStatus.INITIATED
+                || existing.getPaymentStatus() == PaymentStatus.PENDING)) {
+            return this.getPaymentDto(existing);
+        }
+
         BigDecimal amount = BigDecimal.valueOf(freshPlacedOrder.getTotalAmount());
 
         Payment currentPayment = new Payment();
-        currentPayment.setPaymentMethod(this.PAYMENT_METHODS.get(paymentMethod.toUpperCase()));
+        currentPayment.setPaymentMethod(method);
         currentPayment.setUser(freshPlacedOrder.getUser());
         currentPayment.setPaymentStatus(PaymentStatus.INITIATED);
         currentPayment.setAmount(amount);
@@ -108,10 +121,12 @@ public class PaymentServicesImpl implements PaymentService {
         this.paymentRepository.saveAndFlush(currentPayment);
 
 
-        if(paymentMethod.toUpperCase().equals("CASH ON DELIVERY")) {
+        if(method == PaymentMethod.CashOnDelivery) {
             currentPayment.setPaymentStatus(PaymentStatus.PENDING);
             freshPlacedOrder.setPayment(currentPayment);
             this.orderRepository.save(freshPlacedOrder);
+            // Paid on delivery: confirm now so OrderExpiryJob doesn't expire the order and release its stock.
+            this.orderService.confirmOrderAfterPayment(orderId);
             return this.getPaymentDto(currentPayment);
         }
 

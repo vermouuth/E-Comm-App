@@ -38,8 +38,8 @@ public class MockGatewayController {
             @NotBlank(message = "outcome is required") @RequestParam String outcome) throws Exception
     {
         String eventType = switch (outcome.toUpperCase()){
-            case "CAPTURED" -> "CAPTURED";
-            case "FAILED" -> "FAILED";
+            case "CAPTURED" -> WebhookPayload.CAPTURE;
+            case "FAILED" -> WebhookPayload.FAILED;
             default ->  throw new IllegalArgumentException("Invalid outcome: " + outcome);
         };
 

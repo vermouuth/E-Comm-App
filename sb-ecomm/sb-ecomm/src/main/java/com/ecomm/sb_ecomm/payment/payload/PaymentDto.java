@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class PaymentDto {
 
-    private Long paymentId;
+    private Long id;
     private String pgPaymentId;
     private String paymentMethod;
     private String paymentStaus;

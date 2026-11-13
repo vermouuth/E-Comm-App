@@ -5,7 +5,7 @@ import com.ecomm.sb_ecomm.payment.model.PaymentStatus;
 import com.ecomm.sb_ecomm.payment.repository.PaymentRepository;
 import com.ecomm.sb_ecomm.payment.services.PaymentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -89,15 +89,11 @@ public class WebhookServiceImpl implements WebhookService {
 
     private boolean isDuplicate(WebhookPayload event) {
 
-        try {
-            webhookEventService.claim(event.eventId());
+        if (webhookEventService.claim(event.eventId())) {
             return false;
-
-        } catch (DuplicateWebhookEventException dup) {
-
-            log.info("Duplicate webhook {} ignored", event.eventId());
-            return true;
         }
+        log.info("Duplicate webhook {} ignored", event.eventId());
+        return true;
     }
 
     private Long resolvePaymentId(WebhookPayload event) {
@@ -117,9 +113,9 @@ public class WebhookServiceImpl implements WebhookService {
 
         return switch (event.eventType()) {
 
-            case "CAPTURE" -> PaymentStatus.CAPTURED;
+            case WebhookPayload.CAPTURE -> PaymentStatus.CAPTURED;
 
-            case "FAILED" -> PaymentStatus.FAILED;
+            case WebhookPayload.FAILED -> PaymentStatus.FAILED;
 
             default -> {
                 log.info(

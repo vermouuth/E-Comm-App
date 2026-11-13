@@ -13,8 +13,8 @@ public class PaymentStatusTransitionValidator {
     private static final Map<PaymentStatus,Set<PaymentStatus>> PAYMENT_STATUS_TRANSITIONS
             = Map.of(
                     PaymentStatus.INITIATED , Set.of(PaymentStatus.PENDING, PaymentStatus.EXPIRED)
-            ,       PaymentStatus.PENDING , Set.of(PaymentStatus.AUTHORIZED, PaymentStatus.EXPIRED , PaymentStatus.CAPTURED)
-            ,       PaymentStatus.AUTHORIZED , Set.of(PaymentStatus.CAPTURED , PaymentStatus.EXPIRED, PaymentStatus.VOIDED)
+            ,       PaymentStatus.PENDING , Set.of(PaymentStatus.AUTHORIZED, PaymentStatus.EXPIRED , PaymentStatus.CAPTURED, PaymentStatus.FAILED)
+            ,       PaymentStatus.AUTHORIZED , Set.of(PaymentStatus.CAPTURED , PaymentStatus.EXPIRED, PaymentStatus.VOIDED, PaymentStatus.FAILED)
             ,       PaymentStatus.CAPTURED , Set.of(PaymentStatus.REFUNDED)
 
     );

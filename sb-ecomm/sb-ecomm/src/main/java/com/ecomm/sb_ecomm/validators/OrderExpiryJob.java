@@ -6,7 +6,7 @@ import com.ecomm.sb_ecomm.product.model.Product;
 import com.ecomm.sb_ecomm.order.model.OrderStatus;
 import com.ecomm.sb_ecomm.order.repository.OrderRepository;
 import com.ecomm.sb_ecomm.product.repository.ProductRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
