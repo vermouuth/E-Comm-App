@@ -18,6 +18,12 @@ public interface AddressServices {
 
     AddressDto deleteAddress(Long addressId);
 
+    /** Updates one of the logged-in user's own addresses; someone else's looks exactly like a missing one. */
+    AddressDto updateUserAddress(AddressDto address, Long addressId);
+
+    /** Deletes one of the logged-in user's own addresses; someone else's looks exactly like a missing one. */
+    AddressDto deleteUserAddress(Long addressId);
+
     List<AddressDto> getAddressesByUserId(Long userId);
 
     AddressDto setAddressAsDefault(Long addressId);

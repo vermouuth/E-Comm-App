@@ -89,6 +89,33 @@ public class AddressServicesImpl implements AddressServices {
         return this.modelMapper.map(address,AddressDto.class);
     }
 
+    private Address getOwnAddress(Long addressId) {
+        Long userId = this.authUtils.loggedInUserId();
+        return this.addressRepository.findByUsersIdAndId(userId, addressId)
+                .orElseThrow(() -> new ResourceNotFoundException("Address","AddressId",addressId));
+    }
+
+    @Override
+    public AddressDto updateUserAddress(AddressDto address, Long addressId) {
+        Address own = getOwnAddress(addressId);
+
+        // isDefault is deliberately not editable here: the set-default endpoint keeps it to one per user.
+        own.setStreet(address.getStreet());
+        own.setCity(address.getCity());
+        own.setState(address.getState());
+        own.setZip(address.getZip());
+        own.setCountry(address.getCountry());
+        own = this.addressRepository.save(own);
+        return this.modelMapper.map(own,AddressDto.class);
+    }
+
+    @Override
+    public AddressDto deleteUserAddress(Long addressId) {
+        Address own = getOwnAddress(addressId);
+        this.addressRepository.delete(own);
+        return this.modelMapper.map(own,AddressDto.class);
+    }
+
     @Override
     public List<AddressDto> getAddressesByUserId(Long userId) {
         Users user = this.userRepository.findById(userId).orElseThrow(()->

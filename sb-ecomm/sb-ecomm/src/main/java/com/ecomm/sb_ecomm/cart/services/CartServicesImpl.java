@@ -269,6 +269,10 @@ public class CartServicesImpl implements CartServices {
         if (quantity == 0) {
             userCart.getCartItems().remove(cartItem); // orphanRemoval handles delete
         } else {
+            int stock = cartItem.getProduct().getStockQuantity();
+            if (quantity > stock)
+                throw new ApiException("Please , make an order of the " + cartItem.getProduct().getProductName() +
+                        " less than or equal to the quantity " + stock + ".");
             cartItem.setQuantity(quantity);
         }
 
