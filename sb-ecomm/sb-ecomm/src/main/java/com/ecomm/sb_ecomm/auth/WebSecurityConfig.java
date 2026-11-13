@@ -8,8 +8,13 @@ import com.ecomm.sb_ecomm.auth.repository.UserRepository;
 import com.ecomm.sb_ecomm.auth.jwt.AuthEntryPoint;
 import com.ecomm.sb_ecomm.auth.jwt.AuthTokenFilter;
 import com.ecomm.sb_ecomm.auth.services.UserDetailsServicesImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.http.MediaType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,13 +23,14 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.Map;
 import java.util.Set;
 
 @Configuration
@@ -40,6 +46,30 @@ public class WebSecurityConfig {
 
     @Bean
     public AuthTokenFilter authTokenFilter() {return new AuthTokenFilter();}
+
+    // The JWT filter belongs only in the security chain. Without this, Spring Boot would also
+    // register it as a plain servlet filter because it is a Filter bean.
+    @Bean
+    public FilterRegistrationBean<AuthTokenFilter> authTokenFilterRegistration(AuthTokenFilter filter) {
+        FilterRegistrationBean<AuthTokenFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    // Authenticated but not allowed (e.g. a USER hitting /api/admin/**): same JSON shape as the 401.
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        ObjectMapper mapper = new ObjectMapper();
+        return (request, response, ex) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            mapper.writeValue(response.getOutputStream(), Map.of(
+                    "status", HttpServletResponse.SC_FORBIDDEN,
+                    "error", "Forbidden",
+                    "message", "You do not have permission to access this resource",
+                    "path", request.getRequestURI()));
+        };
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -60,43 +90,37 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, AccessDeniedHandler accessDeniedHandler) throws Exception {
         http.csrf(csrf -> csrf.disable())
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unauthorizedHandler)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                                  auth
                                 .requestMatchers("/v3/api-docs/**").permitAll()
-                                .requestMatchers("/h2-console/**").permitAll()
+                                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/api/user/**").hasAnyRole("ADMIN" ,"USER")
                                 .requestMatchers("/api/public/**").permitAll()
+                                .requestMatchers("/api/auth/user").authenticated()
                                 .requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers("/swagger-ui/**").permitAll()
-                                .requestMatchers("/api/test/**").permitAll()
                                 .requestMatchers("/images/**").permitAll()
+                                // Authenticated by an HMAC signature in the controller, not by a login.
                                 .requestMatchers("/api/webhooks/**").permitAll()
-                                .requestMatchers("/api/mock-gateway/**").permitAll()
+                                // Can forge "payment captured" webhooks: staff only (and off unless enabled).
+                                .requestMatchers("/api/mock-gateway/**").hasRole("ADMIN")
                                 .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
-        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
         return http.build();
     }
 
+    // Demo accounts with well-known passwords: created only when app.seed-data.enabled=true (dev profile).
     @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web -> web.ignoring().requestMatchers("/v2/api-docs"
-                ,"/configuration/ui",
-                "/swagger-resources/**",
-                "/configuration/security",
-                "/swagger-ui.html",
-                "/webjars/**"));
-    }
-
-    @Bean
+    @ConditionalOnProperty(name = "app.seed-data.enabled", havingValue = "true")
     public CommandLineRunner initData(RoleRepository roleRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             // Retrieve or create roles

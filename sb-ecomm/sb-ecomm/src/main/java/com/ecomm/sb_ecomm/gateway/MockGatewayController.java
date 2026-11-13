@@ -1,9 +1,14 @@
 package com.ecomm.sb_ecomm.gateway;
 
+import jakarta.validation.constraints.*;
+import org.springframework.validation.annotation.Validated;
+
 import com.ecomm.sb_ecomm.payment.webhook.SignatureUtil;
 import com.ecomm.sb_ecomm.payment.webhook.WebhookPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +16,10 @@ import org.springframework.web.client.RestClient;
 
 import java.util.UUID;
 
+// Can sign and fire "payment captured" webhooks, so it only exists when mock.gateway.enabled=true.
+@ConditionalOnProperty(name = "mock.gateway.enabled", havingValue = "true")
+@Hidden
+@Validated
 @RestController
 @RequestMapping("/api/mock-gateway")
 public class MockGatewayController {
@@ -26,7 +35,7 @@ public class MockGatewayController {
     @PostMapping("/complete/{gatewayReference}")
     public ResponseEntity<?> completePayment(
             @PathVariable String gatewayReference,
-            @RequestParam String outcome) throws Exception
+            @NotBlank(message = "outcome is required") @RequestParam String outcome) throws Exception
     {
         String eventType = switch (outcome.toUpperCase()){
             case "CAPTURED" -> "CAPTURED";
