@@ -139,7 +139,7 @@ public class ProductController {
                     content = @Content(schema = @Schema(implementation = com.ecomm.sb_ecomm.common.responses.ApiResponse.class)))
     })
     @SecurityRequirement(name = OpenApiConfig.COOKIE_AUTH)
-    @PutMapping(value = "/admin/products/{productId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "/admin/products/{productId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateImage(@Parameter(description = "Product id") @Positive(message = "productId must be a positive number") @PathVariable("productId") Long productId,
                                           @Parameter(description = "Image file to upload") @RequestParam MultipartFile image) throws IOException {
         ProductDto productDto = this.productService.updateProductImage(productId,image);

@@ -57,7 +57,7 @@ public class CartController {
             @ApiResponse(responseCode = "404", description = "Product not found in cart",
                     content = @Content(schema = @Schema(implementation = com.ecomm.sb_ecomm.common.responses.ApiResponse.class)))
     })
-    @PutMapping("/user/carts/{productId}/quantity/{quantity}")
+    @PatchMapping("/user/carts/{productId}/quantity/{quantity}")
     public ResponseEntity<?> updateUserCartQuantity(@Parameter(description = "Product id") @Positive(message = "productId must be a positive number") @PathVariable("productId") Long productId,
                                                     @Parameter(description = "New quantity") @PositiveOrZero(message = "quantity must be 0 or more") @PathVariable("quantity") int quantity){
         return new ResponseEntity<>(this.cartServices.updateProductQuantity(productId, quantity), HttpStatus.OK);
@@ -103,7 +103,7 @@ public class CartController {
             @ApiResponse(responseCode = "404", description = "Cart or product not found",
                     content = @Content(schema = @Schema(implementation = com.ecomm.sb_ecomm.common.responses.ApiResponse.class)))
     })
-    @PutMapping("/admin/cart/products/{productId}/quantity/{quantity}")
+    @PatchMapping("/admin/cart/products/{productId}/quantity/{quantity}")
     public ResponseEntity<?> updateProductQuantity(@Parameter(description = "Product id") @Positive(message = "productId must be a positive number") @PathVariable("productId") Long productId,
                                                      @Parameter(description = "New quantity") @PositiveOrZero(message = "quantity must be 0 or more") @PathVariable("quantity") int quantity){
         CartDto updatedCart = this.cartServices.updateProductQuantity(productId , quantity);

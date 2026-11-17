@@ -109,7 +109,7 @@ public class AddressController {
             @ApiResponse(responseCode = "404", description = "Address not found",
                     content = @Content(schema = @Schema(implementation = com.ecomm.sb_ecomm.common.responses.ApiResponse.class)))
     })
-    @PutMapping("/user/addresses/{addressId}")
+    @PatchMapping("/user/addresses/{addressId}")
     public ResponseEntity<?> setAddressAsDefault(@Parameter(description = "Address id") @Positive(message = "addressId must be a positive number") @PathVariable Long addressId){
         return new ResponseEntity<>(this.addressServices.setAddressAsDefault(addressId),HttpStatus.OK);
     }
@@ -123,7 +123,7 @@ public class AddressController {
             @ApiResponse(responseCode = "404", description = "Address not found (or not the current user's)",
                     content = @Content(schema = @Schema(implementation = com.ecomm.sb_ecomm.common.responses.ApiResponse.class)))
     })
-    @PatchMapping("/user/addresses/{addressId}")
+    @PutMapping("/user/addresses/{addressId}")
     public ResponseEntity<?> updateUserAddress(@Valid @RequestBody AddressDto address, @Parameter(description = "Address id") @Positive(message = "addressId must be a positive number") @PathVariable Long addressId){
         return new ResponseEntity<>(this.addressServices.updateUserAddress(address,addressId),HttpStatus.OK);
     }
