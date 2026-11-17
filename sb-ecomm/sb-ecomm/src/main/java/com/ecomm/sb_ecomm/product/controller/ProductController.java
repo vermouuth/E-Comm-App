@@ -28,7 +28,7 @@ import java.io.IOException;
 @Tag(name = "Products", description = "Browse and manage products.")
 @Validated
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class ProductController {
 
     private final ProductService productService;
