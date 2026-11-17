@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 @Tag(name = "Auth", description = "Sign up, sign in and manage the current session.")
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     @Autowired
@@ -110,7 +110,6 @@ public class AuthController {
         if(this.userRepository.existsByEmail(signedupUser.getEmail())){
             return ResponseEntity.badRequest().body("Email already exists");
         }
-
 
 
         Users user = new Users(signedupUser.getUsername(),this.passwordEncoder.encode(signedupUser.getPassword()),signedupUser.getEmail());

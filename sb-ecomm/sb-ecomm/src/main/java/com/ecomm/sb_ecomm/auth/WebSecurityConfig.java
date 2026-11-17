@@ -100,11 +100,11 @@ public class WebSecurityConfig {
                                  auth
                                 .requestMatchers("/v3/api-docs/**").permitAll()
                                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/webjars/**").permitAll()
-                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                                .requestMatchers("/api/user/**").hasAnyRole("ADMIN" ,"USER")
-                                .requestMatchers("/api/public/**").permitAll()
-                                .requestMatchers("/api/auth/user").authenticated()
-                                .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/api/v1/user/**").hasAnyRole("ADMIN" ,"USER")
+                                .requestMatchers("/api/v1/public/**").permitAll()
+                                .requestMatchers("/api/v1/auth/user").authenticated()
+                                .requestMatchers("/api/v1/auth/**").permitAll()
                                 .requestMatchers("/images/**").permitAll()
                                 // Authenticated by an HMAC signature in the controller, not by a login.
                                 .requestMatchers("/api/webhooks/**").permitAll()

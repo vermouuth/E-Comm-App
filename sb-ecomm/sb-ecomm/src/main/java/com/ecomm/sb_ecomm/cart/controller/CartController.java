@@ -25,7 +25,7 @@ import java.util.List;
 @SecurityRequirement(name = OpenApiConfig.COOKIE_AUTH)
 @Validated
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class CartController {
 
     private final CartServices cartServices;

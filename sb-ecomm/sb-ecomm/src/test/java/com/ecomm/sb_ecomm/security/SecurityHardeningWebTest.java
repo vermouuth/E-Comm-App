@@ -90,7 +90,7 @@ class SecurityHardeningWebTest {
         when(roleRepository.findByRoleName(AppRole.ROLE_ADMIN)).thenReturn(Optional.of(new Role(AppRole.ROLE_ADMIN)));
         when(roleRepository.findByRoleName(AppRole.ROLE_SELLER)).thenReturn(Optional.of(new Role(AppRole.ROLE_SELLER)));
 
-        mockMvc.perform(post("/api/auth/signup")
+        mockMvc.perform(post("/api/v1/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"username":"mallory","password":"password123",
@@ -107,7 +107,7 @@ class SecurityHardeningWebTest {
 
     @Test
     void signup_enforcesPasswordRules() throws Exception {
-        mockMvc.perform(post("/api/auth/signup")
+        mockMvc.perform(post("/api/v1/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"username":"mallory","password":"short","email":"mallory@example.com"}
@@ -121,7 +121,7 @@ class SecurityHardeningWebTest {
 
     @Test
     void signin_setsHardenedCookie_andDoesNotLeakTokenInBody() throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/auth/signin")
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/signin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"user1\",\"password\":\"password1\"}"))
                 .andExpect(status().isOk())
@@ -137,7 +137,7 @@ class SecurityHardeningWebTest {
 
     @Test
     void signout_expiresTheCookie() throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/auth/signout"))
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/signout"))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -149,13 +149,13 @@ class SecurityHardeningWebTest {
 
     @Test
     void currentUserEndpoint_withoutCookie_is401_notAServerError() throws Exception {
-        mockMvc.perform(get("/api/auth/user"))
+        mockMvc.perform(get("/api/v1/auth/user"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void currentUserEndpoint_withValidCookie_returnsTheUser() throws Exception {
-        mockMvc.perform(get("/api/auth/user").cookie(authCookieFor("user1")))
+        mockMvc.perform(get("/api/v1/auth/user").cookie(authCookieFor("user1")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("user1")));
     }
@@ -165,20 +165,20 @@ class SecurityHardeningWebTest {
         Cookie tampered = authCookieFor("user1");
         tampered.setValue(tampered.getValue() + "x");
 
-        mockMvc.perform(get("/api/auth/user").cookie(tampered))
+        mockMvc.perform(get("/api/v1/auth/user").cookie(tampered))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void userRole_isForbiddenFromAdminRoutes_withAJsonBody() throws Exception {
-        mockMvc.perform(get("/api/admin/anything").cookie(authCookieFor("user1")))
+        mockMvc.perform(get("/api/v1/admin/anything").cookie(authCookieFor("user1")))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
     }
 
     @Test
     void anonymous_isRejectedFromAdminRoutes() throws Exception {
-        mockMvc.perform(get("/api/admin/anything"))
+        mockMvc.perform(get("/api/v1/admin/anything"))
                 .andExpect(status().isUnauthorized());
     }
 

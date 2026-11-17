@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = OpenApiConfig.COOKIE_AUTH)
 @Validated
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/v1/user")
 public class PaymentController {
 
     private final PaymentService paymentService;

@@ -29,7 +29,7 @@ public class OpenApiConfig {
 
                                 Authentication uses a JWT delivered as an HTTP cookie named "%s" (not a \
                                 Bearer header). To call secured endpoints from this page: call \
-                                POST /api/auth/signin, copy the value of that cookie from the response, \
+                                POST /api/v1/auth/signin, copy the value of that cookie from the response, \
                                 then click "Authorize" below and paste it in."""
                                 .formatted(jwtCookieName))
                         .contact(new Contact().name("E-Comm API")))

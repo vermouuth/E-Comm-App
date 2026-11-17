@@ -360,7 +360,7 @@ class SbEcommApplicationTests {
     void invalidPaymentMethod_returns400_andSavesNothing() throws Exception {
         Long orderId = placeOrder().getId();
 
-        mvc.perform(post("/api/user/payments/checkout/" + orderId)
+        mvc.perform(post("/api/v1/user/payments/checkout/" + orderId)
                         .param("paymentMethod", "bitcoin")
                         .with(user("tester").roles("USER")))
                 .andExpect(status().isBadRequest());

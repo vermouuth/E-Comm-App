@@ -37,7 +37,7 @@ class RequestValidationWebTest {
     @MockitoBean RoleRepository roleRepository;
 
     private ResultActions signup(String json) throws Exception {
-        return mockMvc.perform(post("/api/auth/signup").contentType(MediaType.APPLICATION_JSON).content(json));
+        return mockMvc.perform(post("/api/v1/auth/signup").contentType(MediaType.APPLICATION_JSON).content(json));
     }
 
     @Test
@@ -46,7 +46,7 @@ class RequestValidationWebTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Request body is invalid, please fix and resend"))
                 .andExpect(jsonPath("$.missingFields", contains("password")))
-                .andExpect(jsonPath("$.path").value("/api/auth/signup"))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/signup"))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
